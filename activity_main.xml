@@ -1,72 +1,170 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/black"
-    android:padding="16dp">
+package com.example.calculator
 
-    <TextView
-        android:id="@+id/tvExpression"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:gravity="end"
-        android:textColor="@color/white"
-        android:textSize="40sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="12+34"
-        xmlns:tools="http://schemas.android.com/tools" />
+import android.os.Bundle
+import android.text.InputType
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import java.text.DecimalFormat
 
-    <TextView
-        android:id="@+id/tvResult"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="end"
-        android:textColor="@color/gray_light"
-        android:textSize="28sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvExpression" />
+class MainActivity : AppCompatActivity() {
 
-    <GridLayout
-        android:id="@+id/keyboard"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="24dp"
-        android:columnCount="4"
-        android:rowCount="5"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvResult">
+    private lateinit var display: EditText
+    private var resultShown = false
 
-        <Button android:id="@+id/btnClear" style="@style/CalcButton.Function" android:text="@string/clear" />
-        <Button android:id="@+id/btnBackspace" style="@style/CalcButton.Function" android:text="@string/backspace" />
-        <Button android:id="@+id/btnPercent" style="@style/CalcButton.Function" android:text="@string/percent" />
-        <Button android:id="@+id/btnDivide" style="@style/CalcButton.Operator" android:text="@string/divide" />
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-        <Button android:id="@+id/btn7" style="@style/CalcButton.Digit" android:text="@string/digit_7" />
-        <Button android:id="@+id/btn8" style="@style/CalcButton.Digit" android:text="@string/digit_8" />
-        <Button android:id="@+id/btn9" style="@style/CalcButton.Digit" android:text="@string/digit_9" />
-        <Button android:id="@+id/btnMultiply" style="@style/CalcButton.Operator" android:text="@string/multiply" />
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(0xFF000000.toInt())
+            setPadding(24, 48, 24, 24)
+        }
 
-        <Button android:id="@+id/btn4" style="@style/CalcButton.Digit" android:text="@string/digit_4" />
-        <Button android:id="@+id/btn5" style="@style/CalcButton.Digit" android:text="@string/digit_5" />
-        <Button android:id="@+id/btn6" style="@style/CalcButton.Digit" android:text="@string/digit_6" />
-        <Button android:id="@+id/btnMinus" style="@style/CalcButton.Operator" android:text="@string/minus" />
+        display = EditText(this).apply {
+            setTextColor(0xFFFFFFFF.toInt())
+            setBackgroundColor(0xFF000000.toInt())
+            textSize = 40f
+            gravity = Gravity.END
+            inputType = InputType.TYPE_NULL
+            isCursorVisible = false
+            keyListener = null
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        root.addView(display)
 
-        <Button android:id="@+id/btn1" style="@style/CalcButton.Digit" android:text="@string/digit_1" />
-        <Button android:id="@+id/btn2" style="@style/CalcButton.Digit" android:text="@string/digit_2" />
-        <Button android:id="@+id/btn3" style="@style/CalcButton.Digit" android:text="@string/digit_3" />
-        <Button android:id="@+id/btnPlus" style="@style/CalcButton.Operator" android:text="@string/plus" />
+        val rows = listOf(
+            listOf("C", "⌫", "%", "÷"),
+            listOf("7", "8", "9", "×"),
+            listOf("4", "5", "6", "−"),
+            listOf("1", "2", "3", "+"),
+            listOf("0", ".", "=")
+        )
+        for (row in rows) {
+            val rowLayout = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
+                )
+            }
+            for (key in row) {
+                val weight = if (row.size == 3 && key == "0") 2f else 1f
+                val btn = Button(this).apply {
+                    text = key
+                    textSize = 24f
+                    setTextColor(0xFFFFFFFF.toInt())
+                    when (key) {
+                        "C", "⌫", "%" -> setBackgroundColor(0xFFAAAAAA.toInt())
+                        "÷", "×", "−", "+", "=" -> setBackgroundColor(0xFFFF9500.toInt())
+                        else -> setBackgroundColor(0xFF333333.toInt())
+                    }
+                    layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight).apply {
+                        setMargins(6, 6, 6, 6)
+                    }
+                    setOnClickListener { onKey(key) }
+                }
+                rowLayout.addView(btn)
+            }
+            root.addView(rowLayout)
+        }
 
-        <Button android:id="@+id/btn0" style="@style/CalcButton.Digit" android:layout_columnSpan="2" android:text="@string/digit_0" />
-        <Button android:id="@+id/btnDot" style="@style/CalcButton.Digit" android:text="@string/dot" />
-        <Button android:id="@+id/btnEquals" style="@style/CalcButton.Operator" android:text="@string/equals" />
-    </GridLayout>
+        setContentView(root)
+        if (savedInstanceState != null) display.setText(savedInstanceState.getString("expr", ""))
+    }
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    private fun onKey(k: String) {
+        when (k) {
+            "C" -> { display.setText(""); resultShown = false }
+            "⌫" -> { if (!resultShown) display.setText(display.text.dropLast(1)) }
+            "=" -> {
+                try {
+                    val v = ExpressionParser.evaluate(display.text.toString())
+                    display.setText(DecimalFormat("#.##########").format(v))
+                    resultShown = true
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Invalid expression", Toast.LENGTH_SHORT).show()
+                }
+            }
+            else -> {
+                if (resultShown) { display.setText(""); resultShown = false }
+                display.append(k)
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("expr", display.text.toString())
+    }
+}
+
+object ExpressionParser {
+    fun evaluate(input: String): Double {
+        val tokens = tokenize(input)
+        var pos = 0
+
+        fun parsePrimary(): Double {
+            var sign = 1.0
+            if (pos < tokens.size && tokens[pos] == "-") { sign = -1.0; pos++ }
+            val num = tokens.getOrNull(pos)?.toDoubleOrNull() ?: throw IllegalArgumentException()
+            pos++
+            var value = num
+            if (pos < tokens.size && tokens[pos] == "%") { value /= 100.0; pos++ }
+            return sign * value
+        }
+
+        fun parseTerm(): Double {
+            var result = parsePrimary()
+            while (pos < tokens.size && (tokens[pos] == "×" || tokens[pos] == "÷")) {
+                val op = tokens[pos]; pos++
+                val rhs = parsePrimary()
+                result = if (op == "×") result * rhs else {
+                    if (rhs == 0.0) throw ArithmeticException()
+                    result / rhs
+                }
+            }
+            return result
+        }
+
+        fun parseExpr(): Double {
+            var result = parseTerm()
+            while (pos < tokens.size && (tokens[pos] == "+" || tokens[pos] == "-")) {
+                val op = tokens[pos]; pos++
+                val rhs = parseTerm()
+                result = if (op == "+") result + rhs else result - rhs
+            }
+            return result
+        }
+
+        val value = parseExpr()
+        if (pos != tokens.size) throw IllegalArgumentException()
+        return value
+    }
+
+    private fun tokenize(input: String): List<String> {
+        val tokens = mutableListOf<String>()
+        var i = 0
+        while (i < input.length) {
+            val c = input[i]
+            when {
+                c.isDigit() || c == '.' -> {
+                    val start = i
+                    while (i < input.length && (input[i].isDigit() || input[i] == '.')) i++
+                    tokens.add(input.substring(start, i))
+                }
+                c in "+-×÷%" -> { tokens.add(c.toString()); i++ }
+                else -> throw IllegalArgumentException()
+            }
+        }
+        return tokens
+    }
+}
+                        
