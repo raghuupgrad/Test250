@@ -3,7 +3,6 @@ package com.example.calculator
 import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
-import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
@@ -66,7 +65,9 @@ class MainActivity : AppCompatActivity() {
                         "÷", "×", "−", "+", "=" -> setBackgroundColor(0xFFFF9500.toInt())
                         else -> setBackgroundColor(0xFF333333.toInt())
                     }
-                    layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.MATCH_PARENT, weight
+                    ).apply {
                         setMargins(6, 6, 6, 6)
                     }
                     setOnClickListener { onKey(key) }
@@ -77,13 +78,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContentView(root)
-        if (savedInstanceState != null) display.setText(savedInstanceState.getString("expr", ""))
+        if (savedInstanceState != null) {
+            display.setText(savedInstanceState.getString("expr", ""))
+        }
     }
 
     private fun onKey(k: String) {
         when (k) {
-            "C" -> { display.setText(""); resultShown = false }
-            "⌫" -> { if (!resultShown) display.setText(display.text.dropLast(1)) }
+            "C" -> {
+                display.setText("")
+                resultShown = false
+            }
+            "⌫" -> {
+                if (!resultShown) display.setText(display.text.dropLast(1))
+            }
             "=" -> {
                 try {
                     val v = ExpressionParser.evaluate(display.text.toString())
@@ -94,7 +102,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             else -> {
-                if (resultShown) { display.setText(""); resultShown = false }
+                if (resultShown) {
+                    display.setText("")
+                    resultShown = false
+                }
                 display.append(k)
             }
         }
@@ -107,27 +118,36 @@ class MainActivity : AppCompatActivity() {
 }
 
 object ExpressionParser {
+
     fun evaluate(input: String): Double {
         val tokens = tokenize(input)
         var pos = 0
 
         fun parsePrimary(): Double {
             var sign = 1.0
-            if (pos < tokens.size && tokens[pos] == "-") { sign = -1.0; pos++ }
-            val num = tokens.getOrNull(pos)?.toDoubleOrNull() ?: throw IllegalArgumentException()
+            if (pos < tokens.size && tokens[pos] == "-") {
+                sign = -1.0
+                pos++
+            }
+            val num = tokens.getOrNull(pos)?.toDoubleOrNull()
+                ?: throw IllegalArgumentException("Expected number")
             pos++
             var value = num
-            if (pos < tokens.size && tokens[pos] == "%") { value /= 100.0; pos++ }
+            if (pos < tokens.size && tokens[pos] == "%") {
+                value /= 100.0
+                pos++
+            }
             return sign * value
         }
 
         fun parseTerm(): Double {
             var result = parsePrimary()
             while (pos < tokens.size && (tokens[pos] == "×" || tokens[pos] == "÷")) {
-                val op = tokens[pos]; pos++
+                val op = tokens[pos]
+                pos++
                 val rhs = parsePrimary()
                 result = if (op == "×") result * rhs else {
-                    if (rhs == 0.0) throw ArithmeticException()
+                    if (rhs == 0.0) throw ArithmeticException("Division by zero")
                     result / rhs
                 }
             }
@@ -137,7 +157,8 @@ object ExpressionParser {
         fun parseExpr(): Double {
             var result = parseTerm()
             while (pos < tokens.size && (tokens[pos] == "+" || tokens[pos] == "-")) {
-                val op = tokens[pos]; pos++
+                val op = tokens[pos]
+                pos++
                 val rhs = parseTerm()
                 result = if (op == "+") result + rhs else result - rhs
             }
@@ -145,7 +166,7 @@ object ExpressionParser {
         }
 
         val value = parseExpr()
-        if (pos != tokens.size) throw IllegalArgumentException()
+        if (pos != tokens.size) throw IllegalArgumentException("Unexpected token")
         return value
     }
 
@@ -160,8 +181,11 @@ object ExpressionParser {
                     while (i < input.length && (input[i].isDigit() || input[i] == '.')) i++
                     tokens.add(input.substring(start, i))
                 }
-                c in "+-×÷%" -> { tokens.add(c.toString()); i++ }
-                else -> throw IllegalArgumentException()
+                c in "+-×÷%" -> {
+                    tokens.add(c.toString())
+                    i++
+                }
+                else -> throw IllegalArgumentException("Invalid character")
             }
         }
         return tokens
