@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvExpression"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:gravity="end"
+        android:textColor="@color/white"
+        android:textSize="40sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="12+34"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+    <TextView
+        android:id="@+id/tvResult"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:textColor="@color/gray_light"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvExpression" />
+
+    <GridLayout
+        android:id="@+id/keyboard"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        android:columnCount="4"
+        android:rowCount="5"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvResult">
+
+        <Button android:id="@+id/btnClear" style="@style/CalcButton.Function" android:text="@string/clear" />
+        <Button android:id="@+id/btnBackspace" style="@style/CalcButton.Function" android:text="@string/backspace" />
+        <Button android:id="@+id/btnPercent" style="@style/CalcButton.Function" android:text="@string/percent" />
+        <Button android:id="@+id/btnDivide" style="@style/CalcButton.Operator" android:text="@string/divide" />
+
+        <Button android:id="@+id/btn7" style="@style/CalcButton.Digit" android:text="@string/digit_7" />
+        <Button android:id="@+id/btn8" style="@style/CalcButton.Digit" android:text="@string/digit_8" />
+        <Button android:id="@+id/btn9" style="@style/CalcButton.Digit" android:text="@string/digit_9" />
+        <Button android:id="@+id/btnMultiply" style="@style/CalcButton.Operator" android:text="@string/multiply" />
+
+        <Button android:id="@+id/btn4" style="@style/CalcButton.Digit" android:text="@string/digit_4" />
+        <Button android:id="@+id/btn5" style="@style/CalcButton.Digit" android:text="@string/digit_5" />
+        <Button android:id="@+id/btn6" style="@style/CalcButton.Digit" android:text="@string/digit_6" />
+        <Button android:id="@+id/btnMinus" style="@style/CalcButton.Operator" android:text="@string/minus" />
+
+        <Button android:id="@+id/btn1" style="@style/CalcButton.Digit" android:text="@string/digit_1" />
+        <Button android:id="@+id/btn2" style="@style/CalcButton.Digit" android:text="@string/digit_2" />
+        <Button android:id="@+id/btn3" style="@style/CalcButton.Digit" android:text="@string/digit_3" />
+        <Button android:id="@+id/btnPlus" style="@style/CalcButton.Operator" android:text="@string/plus" />
+
+        <Button android:id="@+id/btn0" style="@style/CalcButton.Digit" android:layout_columnSpan="2" android:text="@string/digit_0" />
+        <Button android:id="@+id/btnDot" style="@style/CalcButton.Digit" android:text="@string/dot" />
+        <Button android:id="@+id/btnEquals" style="@style/CalcButton.Operator" android:text="@string/equals" />
+    </GridLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
