@@ -6,164 +6,116 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import java.text.DecimalFormat
 
 class MainActivity : AppCompatActivity() {
 
+    private var current = ""
+    private var first = 0.0
+    private var op = ""
     private lateinit var display: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val root = LinearLayout(this)
+        root.orientation = LinearLayout.VERTICAL
+        root.setBackgroundColor(0xFF000000.toInt())
+        root.setPadding(24, 48, 24, 24)
 
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xFF000000.toInt())
-            setPadding(24, 48, 24, 24)
-        }
-
-        display = EditText(this).apply {
-            setTextColor(0xFFFFFFFF.toInt())
-            setBackgroundColor(0xFF000000.toInt())
-            textSize = 40f
-            gravity = Gravity.END
-            inputType = InputType.TYPE_NULL
-            isCursorVisible = false
-            keyListener = null
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
+        display = EditText(this)
+        display.setTextColor(0xFFFFFFFF.toInt())
+        display.setBackgroundColor(0xFF000000.toInt())
+        display.textSize = 40f
+        display.gravity = Gravity.END
+        display.inputType = InputType.TYPE_NULL
+        display.keyListener = null
+        display.layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
         root.addView(display)
 
-        val grid = GridLayout(this).apply {
-            columnCount = 4
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                0, 1f
+        val keys = arrayOf(
+            arrayOf("C", "⌫", "÷", "×"),
+            arrayOf("7", "8", "9", "-"),
+            arrayOf("4", "5", "6", "+"),
+            arrayOf("1", "2", "3", "="),
+            arrayOf("0", ".", "", "")
+        )
+        for (row in keys) {
+            val line = LinearLayout(this)
+            line.orientation = LinearLayout.HORIZONTAL
+            line.layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
             )
-        }
-        root.addView(grid)
-
-        val keys = listOf("C", "⌫", "%", "÷", "7", "8", "9", "×",
-                          "4", "5", "6", "−", "1", "2", "3", "+",
-                          "0", "", ".", "=")
-        for (k in keys) {
-            val btn = Button(this).apply {
-                text = k
-                textSize = 24f
-                setTextColor(0xFFFFFFFF.toInt())
-                when (k) {
-                    "C", "⌫", "%" -> setBackgroundColor(0xFFAAAAAA.toInt())
-                    "÷", "×", "−", "+", "=" -> setBackgroundColor(0xFFFF9500.toInt())
-                    else -> setBackgroundColor(0xFF333333.toInt())
-                }
-                layoutParams = GridLayout.LayoutParams().apply {
-                    width = 0
-                    height = 0
-                    columnWeight = 1f
-                    rowWeight = 1f
-                    setMargins(6, 6, 6, 6)
-                }
-                setOnClickListener { onKey(k) }
+            for (k in row) {
+                if (k.isEmpty()) continue
+                val b = Button(this)
+                b.text = k
+                b.textSize = 24f
+                b.setTextColor(0xFFFFFFFF.toInt())
+                b.setBackgroundColor(
+                    if (k == "C" || k == "⌫") 0xFFAAAAAA.toInt()
+                    else if (k in arrayOf("÷", "×", "-", "+", "=")) 0xFFFF9500.toInt()
+                    else 0xFF333333.toInt()
+                )
+                b.layoutParams = LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.MATCH_PARENT, 1f
+                ).apply { setMargins(6, 6, 6, 6) }
+                b.setOnClickListener { press(k) }
+                line.addView(b)
             }
-            if (k.isNotEmpty()) grid.addView(btn) else grid.addView(View(this), GridLayout.LayoutParams().apply { width = 0; height = 0; columnWeight = 1f; rowWeight = 1f })
+            root.addView(line)
         }
-
         setContentView(root)
-        if (savedInstanceState != null) display.setText(savedInstanceState.getString("expr", ""))
     }
 
-    private var resultShown = false
-
-    private fun onKey(k: String) {
-        when (k) {
-            "C" -> { display.setText(""); resultShown = false }
-            "⌫" -> { if (!resultShown) display.setText(display.text.dropLast(1)) }
-            "=" -> {
-                try {
-                    val v = ExpressionParser.evaluate(display.text.toString())
-                    display.setText(DecimalFormat("#.##########").format(v))
-                    resultShown = true
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Invalid expression", Toast.LENGTH_SHORT).show()
+    private fun press(k: String) {
+        when {
+            k in "0123456789." -> {
+                current += k
+                show(current)
+            }
+            k == "C" -> {
+                current = ""
+                first = 0.0
+                op = ""
+                show("")
+            }
+            k == "⌫" -> {
+                current = current.dropLast(1)
+                show(current)
+            }
+            k in arrayOf("+", "-", "×", "÷") -> {
+                if (current.isNotEmpty()) {
+                    first = current.toDouble()
+                    current = ""
                 }
+                op = k
+                show("")
             }
-            else -> {
-                if (resultShown) { display.setText(""); resultShown = false }
-                display.append(k)
-            }
-        }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putString("expr", display.text.toString())
-    }
-}
-
-object ExpressionParser {
-    fun evaluate(input: String): Double {
-        val tokens = tokenize(input)
-        var pos = 0
-
-        fun parsePrimary(): Double {
-            var sign = 1.0
-            if (pos < tokens.size && tokens[pos] == "-") { sign = -1.0; pos++ }
-            val num = tokens.getOrNull(pos)?.toDoubleOrNull() ?: throw IllegalArgumentException()
-            pos++
-            var value = num
-            if (pos < tokens.size && tokens[pos] == "%") { value /= 100.0; pos++ }
-            return sign * value
-        }
-
-        fun parseTerm(): Double {
-            var result = parsePrimary()
-            while (pos < tokens.size && (tokens[pos] == "×" || tokens[pos] == "÷")) {
-                val op = tokens[pos]; pos++
-                val rhs = parsePrimary()
-                result = if (op == "×") result * rhs else {
-                    if (rhs == 0.0) throw ArithmeticException()
-                    result / rhs
+            k == "=" -> {
+                if (current.isEmpty() || op.isEmpty()) return
+                val second = current.toDouble()
+                val r = when (op) {
+                    "+" -> first + second
+                    "-" -> first - second
+                    "×" -> first * second
+                    else -> if (second == 0.0) {
+                        Toast.makeText(this, "Cannot divide by 0", Toast.LENGTH_SHORT).show()
+                        return
+                    } else first / second
                 }
+                show(if (r == r.toLong().toDouble()) r.toLong().toString() else r.toString())
+                current = ""
+                op = ""
             }
-            return result
         }
-
-        fun parseExpr(): Double {
-            var result = parseTerm()
-            while (pos < tokens.size && (tokens[pos] == "+" || tokens[pos] == "-")) {
-                val op = tokens[pos]; pos++
-                val rhs = parseTerm()
-                result = if (op == "+") result + rhs else result - rhs
-            }
-            return result
-        }
-
-        val value = parseExpr()
-        if (pos != tokens.size) throw IllegalArgumentException()
-        return value
     }
 
-    private fun tokenize(input: String): List<String> {
-        val tokens = mutableListOf<String>()
-        var i = 0
-        while (i < input.length) {
-            val c = input[i]
-            when {
-                c.isDigit() || c == '.' -> {
-                    val start = i
-                    while (i < input.length && (input[i].isDigit() || input[i] == '.')) i++
-                    tokens.add(input.substring(start, i))
-                }
-                c in "+-×÷%" -> { tokens.add(c.toString()); i++ }
-                else -> throw IllegalArgumentException()
-            }
-        }
-        return tokens
+    private fun show(s: String) {
+        display.setText(s)
     }
 }
